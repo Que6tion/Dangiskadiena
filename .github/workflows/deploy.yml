@@ -15,7 +15,7 @@ jobs:
       - name: Generate config
         run: |
           mkdir -p public
-          echo "const API_KEY = '${{ secrets.API_KEY }}';" > public/config.js
+          echo "const API_KEY = atob('${{ secrets.API_KEY_BASE64 }}');" > public/config.js
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
