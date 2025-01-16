@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const GITHUB_TOKEN = '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'; // Replace with your actual GitHub token
     const REPO_OWNER = "Que6tion";
     const REPO_NAME = "Dangiskadiena";
     const FILE_PATH = "data.xlsx";
@@ -13,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let sheetData = [];
 
-    // Fetch the file content from GitHub
     fetchFromGitHub()
         .then((dataBuffer) => {
             const workbook = XLSX.read(dataBuffer, { type: "array" });
@@ -68,20 +66,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function fetchFromGitHub() {
-        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-        const response = await fetch(url, {
-            headers: {
-                Authorization: `token ${GITHUB_TOKEN}`,
-                Accept: 'application/vnd.github.v3+json'
-            }
-        });
-
+        const response = await fetch(`/api/github-proxy?owner=${REPO_OWNER}&repo=${REPO_NAME}&path=${FILE_PATH}`);
         if (!response.ok) {
             throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
         }
-
-        const fileData = await response.json();
-        return fetch(fileData.download_url).then((res) => res.arrayBuffer());
+        return response.arrayBuffer();
     }
 
     async function updateGitHubFile() {
@@ -91,31 +80,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const excelFile = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
 
-        const fileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-        const fileResponse = await fetch(fileUrl, {
+        const updateResponse = await fetch('/api/github-update', {
+            method: "POST",
             headers: {
-                Authorization: `token ${GITHUB_TOKEN}`,
-                Accept: 'application/vnd.github.v3+json'
-            }
-        });
-
-        if (!fileResponse.ok) {
-            throw new Error(`GitHub API error: ${fileResponse.status} ${fileResponse.statusText}`);
-        }
-
-        const fileInfo = await fileResponse.json();
-
-        const updateResponse = await fetch(fileUrl, {
-            method: "PUT",
-            headers: {
-                Authorization: `token ${GITHUB_TOKEN}`,
-                Accept: 'application/vnd.github.v3+json',
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                message: "Update Excel file via web app",
+                owner: REPO_OWNER,
+                repo: REPO_NAME,
+                path: FILE_PATH,
                 content: excelFile,
-                sha: fileInfo.sha,
+                message: "Update Excel file via web app",
                 branch: BRANCH,
             }),
         });
