@@ -1,14 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Safely retrieve elements from the DOM
     const searchBar = document.getElementById("searchBar");
     const searchResults = document.getElementById("searchResults");
-    const fullData = document.getElementById("fullData");
+    const fullDataTable = document.getElementById("fullDataTable");
+    const fullDataHeader = document.getElementById("fullDataHeader");
+    const fullDataBody = document.getElementById("fullDataBody");
 
-    // Check if the elements exist
-    if (!searchBar || !searchResults || !fullData) {
-        console.error("One or more DOM elements are missing!");
-        return;
-    }
+    let sheetData = []; // Store Excel data
 
     // Fetch and parse the Excel file
     fetch("data.xlsx")
@@ -21,37 +18,73 @@ document.addEventListener("DOMContentLoaded", () => {
         .then((data) => {
             // Parse the Excel file using SheetJS
             const workbook = XLSX.read(data, { type: "array" });
-            const sheetName = workbook.SheetNames[0]; // Get the first sheet name
-            const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 }); // Convert to JSON
+            const sheetName = workbook.SheetNames[0];
+            sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
 
-            // Display the full data in the right panel
+            // Display the full data in the table
             displayFullData(sheetData);
 
             // Add search functionality
             searchBar.addEventListener("input", () => {
                 const query = searchBar.value.toLowerCase();
-                const filteredData = sheetData.filter((row) =>
-                    row.some((cell) => cell && cell.toString().toLowerCase().includes(query))
+                const filteredData = sheetData.filter((row, index) =>
+                    index === 0 || row.some((cell) => cell && cell.toString().toLowerCase().includes(query))
                 );
                 displaySearchResults(filteredData);
             });
         })
         .catch((error) => {
             console.error("Error loading or processing Excel file:", error);
-            fullData.innerHTML = `<div class="error">Unable to load data.xlsx. Please check the file.</div>`;
         });
 
-    // Function to display all data in the right panel
+    // Function to display all data in the table
     function displayFullData(data) {
-        fullData.innerHTML = data
-            .map((row) => `<div>${row.join(" | ")}</div>`)
+        const headers = data[0]; // Extract headers
+        const rows = data.slice(1); // Extract rows
+
+        // Create table header
+        fullDataHeader.innerHTML = `<tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>`;
+
+        // Create table body
+        fullDataBody.innerHTML = rows
+            .map((row) => `<tr>${row.map((cell) => `<td>${cell || ""}</td>`).join("")}</tr>`)
             .join("");
     }
 
-    // Function to display search results in the left panel
+    // Function to display search results
     function displaySearchResults(data) {
-        searchResults.innerHTML = data.length
-            ? data.map((row) => `<div>${row.join(" | ")}</div>`).join("")
-            : "<div>No results found</div>";
+        const headers = data[0]; // Extract headers
+        const rows = data.slice(1); // Extract rows
+
+        // Add checkboxes to rows
+        searchResults.innerHTML = rows
+            .map(
+                (row, rowIndex) =>
+                    `<div>
+                        ${row
+                            .map((cell, cellIndex) => `${headers[cellIndex]}: ${cell || ""}`)
+                            .join(" | ")}
+                        <input type="checkbox" data-index="${rowIndex}" />
+                    </div>`
+            )
+            .join("");
+
+        // Attach event listeners to checkboxes
+        const checkboxes = searchResults.querySelectorAll("input[type='checkbox']");
+        checkboxes.forEach((checkbox) =>
+            checkbox.addEventListener("change", (e) => {
+                const rowIndex = parseInt(e.target.dataset.index, 10) + 1; // Adjust for header row
+                sheetData[rowIndex][sheetData[rowIndex].length - 1] = "Yes"; // Set last column to "Yes"
+                updateExcelFile(); // Update the Excel file
+            })
+        );
+    }
+
+    // Function to update the Excel file
+    function updateExcelFile() {
+        const ws = XLSX.utils.aoa_to_sheet(sheetData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+        XLSX.writeFile(wb, "updated_data.xlsx");
     }
 });
