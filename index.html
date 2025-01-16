@@ -13,7 +13,10 @@
         <div class="left-panel">
             <h2>Search Data</h2>
             <input type="text" id="searchBar" placeholder="Search here...">
-            <div id="searchResults"></div>
+            <table id="searchResultsTable" border="1">
+                <thead id="searchResultsHeader"></thead>
+                <tbody id="searchResultsBody"></tbody>
+            </table>
         </div>
         <!-- Right Panel for Full Data -->
         <div class="right-panel">
@@ -24,7 +27,6 @@
             </table>
         </div>
     </div>
-    <!-- Load script.js AFTER the DOM is fully loaded -->
     <script src="script.js" defer></script>
 </body>
 </html>
