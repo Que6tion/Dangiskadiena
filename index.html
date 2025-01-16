@@ -3,30 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel Search with SheetJS</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>GitHub Excel Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="config.js"></script>
+    <script src="script.js" defer></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Left Panel for Search -->
-        <div class="left-panel">
-            <h2>Search Data</h2>
-            <input type="text" id="searchBar" placeholder="Search here...">
-            <table id="searchResultsTable" border="1">
-                <thead id="searchResultsHeader"></thead>
-                <tbody id="searchResultsBody"></tbody>
-            </table>
-        </div>
-        <!-- Right Panel for Full Data -->
-        <div class="right-panel">
-            <h2>Full Data</h2>
-            <table id="fullDataTable" border="1">
-                <thead id="fullDataHeader"></thead>
-                <tbody id="fullDataBody"></tbody>
-            </table>
-        </div>
-    </div>
-    <script src="script.js" defer></script>
+    <input type="text" id="searchBar" placeholder="Search...">
+    <table>
+        <thead id="searchResultsHeader"></thead>
+        <tbody id="searchResultsBody"></tbody>
+    </table>
+    <table>
+        <thead id="fullDataHeader"></thead>
+        <tbody id="fullDataBody"></tbody>
+    </table>
 </body>
 </html>
