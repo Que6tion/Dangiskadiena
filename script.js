@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const BRANCH = "main"; // Branch name
 
     const searchBar = document.getElementById("searchBar");
-    const searchResults = document.getElementById("searchResults");
-    const fullDataTable = document.getElementById("fullDataTable");
+    const searchResultsHeader = document.getElementById("searchResultsHeader");
+    const searchResultsBody = document.getElementById("searchResultsBody");
     const fullDataHeader = document.getElementById("fullDataHeader");
     const fullDataBody = document.getElementById("fullDataBody");
 
@@ -46,17 +46,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const headers = data[0];
         const rows = data.slice(1);
 
-        searchResults.innerHTML = rows
+        searchResultsHeader.innerHTML = `<tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>`;
+        searchResultsBody.innerHTML = rows
             .map(
                 (row, rowIndex) =>
-                    `<div>
-                        ${row.map((cell, cellIndex) => `${headers[cellIndex]}: ${cell || ""}`).join(" | ")}
-                        <input type="checkbox" data-index="${rowIndex}" />
-                    </div>`
+                    `<tr>
+                        ${row.map((cell) => `<td>${cell || ""}</td>`).join("")}
+                        <td><input type="checkbox" data-index="${rowIndex}" /></td>
+                    </tr>`
             )
             .join("");
 
-        const checkboxes = searchResults.querySelectorAll("input[type='checkbox']");
+        const checkboxes = searchResultsBody.querySelectorAll("input[type='checkbox']");
         checkboxes.forEach((checkbox) =>
             checkbox.addEventListener("change", (e) => {
                 const rowIndex = parseInt(e.target.dataset.index, 10) + 1;
@@ -87,7 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const excelFile = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
 
-        // Fetch the file SHA for updating
         const fileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
         const fileResponse = await fetch(fileUrl, {
             headers: { Authorization: `token ${GITHUB_TOKEN}` },
@@ -99,7 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const fileInfo = await fileResponse.json();
 
-        // Update the file in GitHub
         const updateResponse = await fetch(fileUrl, {
             method: "PUT",
             headers: {
