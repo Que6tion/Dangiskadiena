@@ -1,4 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Check if API_KEY is defined
+    if (typeof API_KEY === 'undefined') {
+        console.error('API_KEY is not defined. Please check config.js');
+        return;
+    }
+
     const REPO_OWNER = "Que6tion";
     const REPO_NAME = "Dangiskadiena";
     const FILE_PATH = "data.xlsx";
@@ -12,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let sheetData = [];
 
+    // Fetch the file content from GitHub
     fetchFromGitHub()
         .then((dataBuffer) => {
             const workbook = XLSX.read(dataBuffer, { type: "array" });
@@ -28,9 +35,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 displaySearchResults(filteredData);
             });
         })
-        .catch((error) => console.error("Error loading or processing Excel file:", error));
+        .catch((error) => {
+            console.error("Error loading or processing Excel file:", error);
+            document.body.innerHTML += `<p style="color: red;">Error: ${error.message}</p>`;
+        });
 
     function displayFullData(data) {
+        if (!data || !data.length) return;
+        
         const headers = data[0];
         const rows = data.slice(1);
 
@@ -41,6 +53,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function displaySearchResults(data) {
+        if (!data || !data.length) return;
+        
         const headers = data[0];
         const rows = data.slice(1);
 
@@ -66,62 +80,73 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function fetchFromGitHub() {
-        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-        const response = await fetch(url, {
-            headers: {
-                Authorization: `token ${API_KEY}`,
-                Accept: 'application/vnd.github.v3+json'
+        try {
+            const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+            const response = await fetch(url, {
+                headers: {
+                    Authorization: `token ${API_KEY}`,
+                    Accept: 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
             }
-        });
 
-        if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+            const fileData = await response.json();
+            const arrayBuffer = await fetch(fileData.download_url).then(res => res.arrayBuffer());
+            return arrayBuffer;
+        } catch (error) {
+            console.error('Fetch error:', error);
+            throw error;
         }
-
-        const fileData = await response.json();
-        return fetch(fileData.download_url).then((res) => res.arrayBuffer());
     }
 
     async function updateGitHubFile() {
-        const workbook = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(sheetData);
-        XLSX.utils.book_append_sheet(workbook, ws, "Sheet1");
+        try {
+            const workbook = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(sheetData);
+            XLSX.utils.book_append_sheet(workbook, ws, "Sheet1");
 
-        const excelFile = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
+            const excelFile = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
 
-        const fileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-        const fileResponse = await fetch(fileUrl, {
-            headers: {
-                Authorization: `token ${API_KEY}`,
-                Accept: 'application/vnd.github.v3+json'
+            const fileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+            const fileResponse = await fetch(fileUrl, {
+                headers: {
+                    Authorization: `token ${API_KEY}`,
+                    Accept: 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!fileResponse.ok) {
+                throw new Error(`GitHub API error: ${fileResponse.status} ${fileResponse.statusText}`);
             }
-        });
 
-        if (!fileResponse.ok) {
-            throw new Error(`GitHub API error: ${fileResponse.status} ${fileResponse.statusText}`);
+            const fileInfo = await fileResponse.json();
+
+            const updateResponse = await fetch(fileUrl, {
+                method: "PUT",
+                headers: {
+                    Authorization: `token ${API_KEY}`,
+                    Accept: 'application/vnd.github.v3+json',
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    message: "Update Excel file via web app",
+                    content: excelFile,
+                    sha: fileInfo.sha,
+                    branch: BRANCH,
+                }),
+            });
+
+            if (!updateResponse.ok) {
+                throw new Error(`Failed to update file: ${updateResponse.status} ${updateResponse.statusText}`);
+            }
+
+            console.log("File updated successfully on GitHub!");
+        } catch (error) {
+            console.error('Update error:', error);
+            throw error;
         }
-
-        const fileInfo = await fileResponse.json();
-
-        const updateResponse = await fetch(fileUrl, {
-            method: "PUT",
-            headers: {
-                Authorization: `token ${API_KEY}`,
-                Accept: 'application/vnd.github.v3+json',
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                message: "Update Excel file via web app",
-                content: excelFile,
-                sha: fileInfo.sha,
-                branch: BRANCH,
-            }),
-        });
-
-        if (!updateResponse.ok) {
-            throw new Error(`Failed to update file: ${updateResponse.status} ${updateResponse.statusText}`);
-        }
-
-        console.log("File updated successfully on GitHub!");
     }
 });
