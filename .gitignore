@@ -1,0 +1,1 @@
+echo "public/config.js" >> .gitignore
