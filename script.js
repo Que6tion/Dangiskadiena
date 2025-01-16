@@ -1,4 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const GITHUB_TOKEN = "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"; // Replace with your GitHub token
+    const REPO_OWNER = "Que6tion"; // Replace with your GitHub username
+    const REPO_NAME = "Dangiskadiena"; // Replace with your repository name
+    const FILE_PATH = "data.xlsx"; // Path to the file in your repository
+    const BRANCH = "main"; // Branch name
+
     const searchBar = document.getElementById("searchBar");
     const searchResults = document.getElementById("searchResults");
     const fullDataTable = document.getElementById("fullDataTable");
@@ -7,24 +13,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let sheetData = []; // Store Excel data
 
-    // Fetch and parse the Excel file
-    fetch("data.xlsx")
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`Failed to fetch file: ${response.statusText}`);
-            }
-            return response.arrayBuffer();
-        })
-        .then((data) => {
-            // Parse the Excel file using SheetJS
-            const workbook = XLSX.read(data, { type: "array" });
+    // Fetch the file content from GitHub
+    fetchFromGitHub()
+        .then((dataBuffer) => {
+            const workbook = XLSX.read(dataBuffer, { type: "array" });
             const sheetName = workbook.SheetNames[0];
             sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
 
-            // Display the full data in the table
             displayFullData(sheetData);
 
-            // Add search functionality
             searchBar.addEventListener("input", () => {
                 const query = searchBar.value.toLowerCase();
                 const filteredData = sheetData.filter((row, index) =>
@@ -33,58 +30,94 @@ document.addEventListener("DOMContentLoaded", () => {
                 displaySearchResults(filteredData);
             });
         })
-        .catch((error) => {
-            console.error("Error loading or processing Excel file:", error);
-        });
+        .catch((error) => console.error("Error loading or processing Excel file:", error));
 
-    // Function to display all data in the table
     function displayFullData(data) {
-        const headers = data[0]; // Extract headers
-        const rows = data.slice(1); // Extract rows
+        const headers = data[0];
+        const rows = data.slice(1);
 
-        // Create table header
         fullDataHeader.innerHTML = `<tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>`;
-
-        // Create table body
         fullDataBody.innerHTML = rows
             .map((row) => `<tr>${row.map((cell) => `<td>${cell || ""}</td>`).join("")}</tr>`)
             .join("");
     }
 
-    // Function to display search results
     function displaySearchResults(data) {
-        const headers = data[0]; // Extract headers
-        const rows = data.slice(1); // Extract rows
+        const headers = data[0];
+        const rows = data.slice(1);
 
-        // Add checkboxes to rows
         searchResults.innerHTML = rows
             .map(
                 (row, rowIndex) =>
                     `<div>
-                        ${row
-                            .map((cell, cellIndex) => `${headers[cellIndex]}: ${cell || ""}`)
-                            .join(" | ")}
+                        ${row.map((cell, cellIndex) => `${headers[cellIndex]}: ${cell || ""}`).join(" | ")}
                         <input type="checkbox" data-index="${rowIndex}" />
                     </div>`
             )
             .join("");
 
-        // Attach event listeners to checkboxes
         const checkboxes = searchResults.querySelectorAll("input[type='checkbox']");
         checkboxes.forEach((checkbox) =>
             checkbox.addEventListener("change", (e) => {
-                const rowIndex = parseInt(e.target.dataset.index, 10) + 1; // Adjust for header row
-                sheetData[rowIndex][sheetData[rowIndex].length - 1] = "Yes"; // Set last column to "Yes"
-                updateExcelFile(); // Update the Excel file
+                const rowIndex = parseInt(e.target.dataset.index, 10) + 1;
+                sheetData[rowIndex][sheetData[rowIndex].length - 1] = "Yes";
+                updateGitHubFile();
             })
         );
     }
 
-    // Function to update the Excel file
-    function updateExcelFile() {
+    async function fetchFromGitHub() {
+        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+        const response = await fetch(url, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` },
+        });
+
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.statusText}`);
+        }
+
+        const fileData = await response.json();
+        return fetch(fileData.download_url).then((res) => res.arrayBuffer());
+    }
+
+    async function updateGitHubFile() {
+        const workbook = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(sheetData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-        XLSX.writeFile(wb, "updated_data.xlsx");
+        XLSX.utils.book_append_sheet(workbook, ws, "Sheet1");
+
+        const excelFile = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
+
+        // Fetch the file SHA for updating
+        const fileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+        const fileResponse = await fetch(fileUrl, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` },
+        });
+
+        if (!fileResponse.ok) {
+            throw new Error(`GitHub API error: ${fileResponse.statusText}`);
+        }
+
+        const fileInfo = await fileResponse.json();
+
+        // Update the file in GitHub
+        const updateResponse = await fetch(fileUrl, {
+            method: "PUT",
+            headers: {
+                Authorization: `token ${GITHUB_TOKEN}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                message: "Update Excel file via web app",
+                content: excelFile,
+                sha: fileInfo.sha,
+                branch: BRANCH,
+            }),
+        });
+
+        if (!updateResponse.ok) {
+            throw new Error(`Failed to update file: ${updateResponse.statusText}`);
+        }
+
+        console.log("File updated successfully on GitHub!");
     }
 });
