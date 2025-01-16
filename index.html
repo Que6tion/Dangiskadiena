@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Search and Update</title>
+</head>
+<body>
+    <h1>Excel Search and Update</h1>
+
+    <input type="text" id="searchInput" placeholder="Search by name...">
+    <button id="searchButton">Search</button>
+    <br><br>
+
+    <table border="1" id="resultTable">
+        <thead>
+            <tr id="tableHeader"></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function searchExcel() {
+            const searchValue = document.getElementById("searchInput").value;
+
+            if (!searchValue) {
+                alert("Please enter a search term.");
+                return;
+            }
+
+            const response = await fetch("/api/excel", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ searchValue }),
+            });
+
+            const data = await response.json();
+
+            // Render the table
+            const tableHeader = document.getElementById("tableHeader");
+            const tableBody = document.querySelector("#resultTable tbody");
+            tableHeader.innerHTML = "";
+            tableBody.innerHTML = "";
+
+            if (data.headers) {
+                data.headers.forEach(header => {
+                    const th = document.createElement("th");
+                    th.textContent = header;
+                    tableHeader.appendChild(th);
+                });
+            }
+
+            if (data.rows) {
+                data.rows.forEach((row, rowIndex) => {
+                    const tr = document.createElement("tr");
+                    row.forEach(cell => {
+                        const td = document.createElement("td");
+                        td.textContent = cell;
+                        tr.appendChild(td);
+                    });
+
+                    // Add checkbox
+                    const td = document.createElement("td");
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.addEventListener("change", async () => {
+                        await fetch("/api/excel", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ rowIndex, checked: checkbox.checked }),
+                        });
+                        alert("Row updated.");
+                    });
+                    td.appendChild(checkbox);
+                    tr.appendChild(td);
+
+                    tableBody.appendChild(tr);
+                });
+            }
+        }
+
+        document.getElementById("searchButton").addEventListener("click", searchExcel);
+    </script>
+</body>
+</html>
