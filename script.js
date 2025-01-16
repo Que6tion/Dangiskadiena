@@ -3,7 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchResults = document.getElementById("searchResults");
     const fullData = document.getElementById("fullData");
 
-    // Load the Excel file
     fetch("data.xlsx")
         .then((response) => response.arrayBuffer())
         .then((data) => {
@@ -13,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             displayFullData(sheetData);
 
-            // Add search functionality
             searchBar.addEventListener("input", () => {
                 const query = searchBar.value.toLowerCase();
                 const filteredData = sheetData.filter((row) =>
@@ -24,14 +22,12 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .catch((error) => console.error("Error loading Excel file:", error));
 
-    // Display all data in the right panel
     function displayFullData(data) {
         fullData.innerHTML = data
             .map((row) => `<div>${row.join(" | ")}</div>`)
             .join("");
     }
 
-    // Display search results in the left panel
     function displaySearchResults(data) {
         searchResults.innerHTML = data.length
             ? data.map((row) => `<div>${row.join(" | ")}</div>`).join("")
