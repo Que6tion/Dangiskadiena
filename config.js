@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const GITHUB_TOKEN = "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"; // Replace with your GitHub token
+    const GITHUB_TOKEN = "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"; // Replace with your GitHub token
     const REPO_OWNER = "Que6tion"; // Replace with your GitHub username
     const REPO_NAME = "Dangiskadiena"; // Replace with your repository name
     const FILE_PATH = "data.xlsx"; // Path to the file in your repository
