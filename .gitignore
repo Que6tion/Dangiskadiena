@@ -1,1 +1,3 @@
-echo "public/config.js" >> .gitignore
+public/config.js
+.DS_Store
+node_modules/
