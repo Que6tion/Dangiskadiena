@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
   const apiKey = process.env.API_KEY; // Use environment variable for the API key
-  const apiUrl = 'https://api.example.com/data'; // Replace with your actual API URL
+  const apiUrl = 'https://que6tion.github.io/Dangiskadiena/public/index.html'; // Replace with your actual API URL
 
   try {
     const response = await fetch(apiUrl, {
