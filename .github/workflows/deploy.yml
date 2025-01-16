@@ -16,6 +16,10 @@ jobs:
         run: |
           mkdir -p public
           echo "const API_KEY = '${{ secrets.API_KEY }}';" > public/config.js
+      - name: Debug file creation
+        run: |
+          ls -la public/
+          cat public/config.js
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
