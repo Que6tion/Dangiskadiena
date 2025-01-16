@@ -8,21 +8,14 @@ permissions:
   pages: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
       - name: Generate config
         run: |
           mkdir -p public
           echo "const API_KEY = '${{ secrets.API_KEY }}';" > public/config.js
-          
-      - name: Debug file creation
-        run: |
-          ls -la public/
-          cat public/config.js
-          
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
