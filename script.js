@@ -1,9 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const GITHUB_TOKEN = ${{ secrets.GITHUBSECRET }}; // Replace with your GitHub token
-    const REPO_OWNER = "Que6tion"; // Replace with your GitHub username
-    const REPO_NAME = "Dangiskadiena"; // Replace with your repository name
-    const FILE_PATH = "data.xlsx"; // Path to the file in your repository
-    const BRANCH = "main"; // Branch name
+    const GITHUB_TOKEN = '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'; // Replace with your actual GitHub token
+    const REPO_OWNER = "Que6tion";
+    const REPO_NAME = "Dangiskadiena";
+    const FILE_PATH = "data.xlsx";
+    const BRANCH = "main";
 
     const searchBar = document.getElementById("searchBar");
     const searchResultsHeader = document.getElementById("searchResultsHeader");
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fullDataHeader = document.getElementById("fullDataHeader");
     const fullDataBody = document.getElementById("fullDataBody");
 
-    let sheetData = []; // Store Excel data
+    let sheetData = [];
 
     // Fetch the file content from GitHub
     fetchFromGitHub()
@@ -70,11 +70,14 @@ document.addEventListener("DOMContentLoaded", () => {
     async function fetchFromGitHub() {
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
         const response = await fetch(url, {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` },
+            headers: {
+                Authorization: `token ${GITHUB_TOKEN}`,
+                Accept: 'application/vnd.github.v3+json'
+            }
         });
 
         if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.statusText}`);
+            throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
         }
 
         const fileData = await response.json();
@@ -90,11 +93,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const fileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
         const fileResponse = await fetch(fileUrl, {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` },
+            headers: {
+                Authorization: `token ${GITHUB_TOKEN}`,
+                Accept: 'application/vnd.github.v3+json'
+            }
         });
 
         if (!fileResponse.ok) {
-            throw new Error(`GitHub API error: ${fileResponse.statusText}`);
+            throw new Error(`GitHub API error: ${fileResponse.status} ${fileResponse.statusText}`);
         }
 
         const fileInfo = await fileResponse.json();
@@ -103,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
             method: "PUT",
             headers: {
                 Authorization: `token ${GITHUB_TOKEN}`,
+                Accept: 'application/vnd.github.v3+json',
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -114,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (!updateResponse.ok) {
-            throw new Error(`Failed to update file: ${updateResponse.statusText}`);
+            throw new Error(`Failed to update file: ${updateResponse.status} ${updateResponse.statusText}`);
         }
 
         console.log("File updated successfully on GitHub!");
