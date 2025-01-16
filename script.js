@@ -66,11 +66,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function fetchFromGitHub() {
-        const response = await fetch(`/api/github-proxy?owner=${REPO_OWNER}&repo=${REPO_NAME}&path=${FILE_PATH}`);
+        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+        const response = await fetch(url, {
+            headers: {
+                Authorization: `token ${API_KEY}`,
+                Accept: 'application/vnd.github.v3+json'
+            }
+        });
+
         if (!response.ok) {
             throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
         }
-        return response.arrayBuffer();
+
+        const fileData = await response.json();
+        return fetch(fileData.download_url).then((res) => res.arrayBuffer());
     }
 
     async function updateGitHubFile() {
@@ -80,17 +89,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const excelFile = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
 
-        const updateResponse = await fetch('/api/github-update', {
-            method: "POST",
+        const fileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+        const fileResponse = await fetch(fileUrl, {
             headers: {
+                Authorization: `token ${API_KEY}`,
+                Accept: 'application/vnd.github.v3+json'
+            }
+        });
+
+        if (!fileResponse.ok) {
+            throw new Error(`GitHub API error: ${fileResponse.status} ${fileResponse.statusText}`);
+        }
+
+        const fileInfo = await fileResponse.json();
+
+        const updateResponse = await fetch(fileUrl, {
+            method: "PUT",
+            headers: {
+                Authorization: `token ${API_KEY}`,
+                Accept: 'application/vnd.github.v3+json',
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                owner: REPO_OWNER,
-                repo: REPO_NAME,
-                path: FILE_PATH,
-                content: excelFile,
                 message: "Update Excel file via web app",
+                content: excelFile,
+                sha: fileInfo.sha,
                 branch: BRANCH,
             }),
         });
