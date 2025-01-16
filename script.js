@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchResults = document.getElementById("searchResults");
     const fullData = document.getElementById("fullData");
 
+    console.log("DOM is fully loaded, script is running.");
+
     fetch("data.xlsx")
         .then((response) => response.arrayBuffer())
         .then((data) => {
