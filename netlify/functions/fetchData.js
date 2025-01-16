@@ -1,23 +1,20 @@
 const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
-  // Get the API key from environment variables
-  const apiKey = process.env.API_KEY;
-
-  // Your API endpoint
-  const apiUrl = 'https://api.example.com/data'; // Replace with your API URL
+  const apiKey = process.env.API_KEY; // Use environment variable for the API key
+  const apiUrl = 'https://api.example.com/data'; // Replace with your actual API URL
 
   try {
     const response = await fetch(apiUrl, {
       headers: {
-        Authorization: `Bearer ${apiKey}`, // Include the API key in the header
-      },
+        Authorization: `Bearer ${apiKey}` // Securely pass the API key
+      }
     });
 
     if (!response.ok) {
       return {
         statusCode: response.status,
-        body: JSON.stringify({ error: 'Failed to fetch data' }),
+        body: JSON.stringify({ error: 'Failed to fetch data' })
       };
     }
 
@@ -25,12 +22,13 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     };
   } catch (error) {
+    console.error('Error fetching data:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
+      body: JSON.stringify({ error: 'Internal server error' })
     };
   }
 };
