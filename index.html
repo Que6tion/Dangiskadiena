@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Excel Search with SheetJS</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Include SheetJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -19,7 +18,10 @@
         <!-- Right Panel for Full Data -->
         <div class="right-panel">
             <h2>Full Data</h2>
-            <div id="fullData"></div>
+            <table id="fullDataTable" border="1">
+                <thead id="fullDataHeader"></thead>
+                <tbody id="fullDataBody"></tbody>
+            </table>
         </div>
     </div>
     <!-- Load script.js AFTER the DOM is fully loaded -->
