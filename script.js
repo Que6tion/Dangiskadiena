@@ -1,4 +1,4 @@
-const GITHUB_TOKEN = "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";
+const GITHUB_TOKEN = "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";
 const REPO_OWNER = "Que6tion";
 const REPO_NAME = "Dangiskadiena";
 const FILE_PATH = "data.xlsx";
