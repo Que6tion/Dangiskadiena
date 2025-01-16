@@ -1,14 +1,30 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  pages: write
+
 jobs:
-  build:
+  build-and-deploy:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      
       - name: Generate config
         run: |
+          mkdir -p public
           echo "const API_KEY = '${{ secrets.API_KEY }}';" > public/config.js
-      - name: Deploy
-        # Your deployment steps here
-      - name: Deploy
-          uses: peaceiris/actions-gh-pages@v3
-            with:
-              github_token: ${{ secrets.GITHUB_TOKEN }}
-                  publish_dir: ./public
+          
+      - name: Debug file creation
+        run: |
+          ls -la public/
+          cat public/config.js
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
