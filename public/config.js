@@ -1,2 +1,0 @@
-// config.js.example
-const API_KEY = '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';
