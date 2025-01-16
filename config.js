@@ -1,28 +1,28 @@
-// Load and parse the XLSX file
-fetch('data/yourfile.xlsx') // Replace with your XLSX file path
-  .then(response => response.arrayBuffer())
-  .then(data => {
-    const workbook = XLSX.read(data, { type: 'array' });
-    const sheetName = workbook.SheetNames[0]; // Get the first sheet
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(sheet); // Convert sheet to JSON
+// Function to fetch data from the serverless API
+function fetchDataAndInitialize() {
+  fetch('/.netlify/functions/fetchData') // Serverless function URL
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log("Data fetched successfully:", data);
 
-    // Populate the full table
-    populateTable('fullData', jsonData);
+      // Populate the full table with all rows
+      populateTable('fullData', data);
 
-    // Add search functionality
-    document.getElementById('searchBar').addEventListener('input', function () {
-      const query = this.value.toLowerCase();
-      const filteredData = jsonData.filter(row =>
-        Object.values(row).some(value =>
-          value.toString().toLowerCase().includes(query)
-        )
-      );
-      populateTable('searchResults', filteredData);
+      // Set up search functionality
+      setUpSearch(data);
+    })
+    .catch(error => {
+      console.error('Error fetching data:', error);
+      alert('Failed to load data. Please try again later.');
     });
-  });
+}
 
-// Populate a table with data
+// Function to populate a table with data
 function populateTable(tableId, data) {
   const table = document.getElementById(tableId);
   const thead = table.querySelector('thead');
@@ -55,3 +55,24 @@ function populateTable(tableId, data) {
     tbody.appendChild(tr);
   });
 }
+
+// Function to set up the search functionality
+function setUpSearch(data) {
+  const searchBar = document.getElementById('searchBar');
+  searchBar.addEventListener('input', function () {
+    const query = this.value.toLowerCase();
+
+    // Filter rows based on the search query
+    const filteredData = data.filter(row =>
+      Object.values(row).some(value =>
+        value.toString().toLowerCase().includes(query)
+      )
+    );
+
+    // Populate the search results table
+    populateTable('searchResults', filteredData);
+  });
+}
+
+// Initialize the app
+fetchDataAndInitialize();
